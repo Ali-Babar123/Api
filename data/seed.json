@@ -1,0 +1,16 @@
+[
+  {
+    "hadithNumber": 1,
+    "englishNarrator": "Abu Huraira",
+    "hadithEnglish": "The Prophet (ﷺ) said...",
+    "hadithUrdu": "نبی ﷺ نے فرمایا...",
+    "hadithArabic": "قال النبي ﷺ...",
+    "headingArabic": "باب فضل العلم",
+    "headingUrdu": "علم کی فضیلت",
+    "headingEnglish": "Chapter: Virtue of Knowledge",
+    "chapterId": 1,
+    "bookSlug": "sahih-bukhari",
+    "volume": "1",
+    "status": "authentic"
+  }
+]
