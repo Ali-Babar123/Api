@@ -1,10 +1,13 @@
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const Hadith = require('./models/Hadith');
-
+const Hadith = require('../models/Hadith');
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+// Load environment variables manually if not already loaded
+if (!process.env.MONGO_URI || !process.env.API_KEY) {
+  require('dotenv').config();
+}
+
 const API_KEY = process.env.API_KEY;
 
 app.use(express.json());
@@ -12,16 +15,13 @@ app.use(express.json());
 // 🔒 Middleware for API Key validation
 const validateApiKey = (req, res, next) => {
   const clientKey = req.headers['x-api-key'];
-  console.log('🔐 Client Key:', clientKey);
-  console.log('🔐 Expected Key:', API_KEY);
-
   if (clientKey !== API_KEY) {
     return res.status(401).json({ error: 'Invalid API Key.' });
   }
   next();
 };
 
-// ✅ Public test route to view JSON in browser (GET /test)
+// ✅ Public test route
 app.get('/test', async (req, res) => {
   try {
     const result = await Hadith.find({
@@ -39,12 +39,12 @@ app.get('/test', async (req, res) => {
   }
 });
 
-// ✅ POST API (Body: hadithNumber, bookSlug)
+// ✅ POST API
 app.post('/api/hadith', validateApiKey, async (req, res) => {
   const { hadithNumber, bookSlug } = req.body;
 
   if (!hadithNumber || !bookSlug) {
-    return res.status(400).json({ error: 'hadithNumber and bookSlug are required in request body.' });
+    return res.status(400).json({ error: 'hadithNumber and bookSlug are required.' });
   }
 
   try {
@@ -63,12 +63,12 @@ app.post('/api/hadith', validateApiKey, async (req, res) => {
   }
 });
 
-// ✅ GET API (Query: ?hidayatNo=1&bookSlug=sahih-bukhari)
+// ✅ GET API
 app.get('/', validateApiKey, async (req, res) => {
   const { hidayatNo, bookSlug } = req.query;
 
   if (!hidayatNo || !bookSlug) {
-    return res.status(400).json({ error: 'hidayatNo and bookSlug are required in query.' });
+    return res.status(400).json({ error: 'hidayatNo and bookSlug are required.' });
   }
 
   try {
@@ -87,13 +87,20 @@ app.get('/', validateApiKey, async (req, res) => {
   }
 });
 
-// ✅ MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => {
+// ✅ MongoDB connection
+let isConnected = false;
+async function connectToMongo() {
+  if (isConnected) return;
+  await mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  });
+  isConnected = true;
   console.log('✅ MongoDB connected');
-  app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
-}).catch(err => {
-  console.error('❌ MongoDB connection error:', err);
-});
+}
+
+// ✅ Vercel handler export
+module.exports = async (req, res) => {
+  await connectToMongo();
+  app(req, res);
+};
